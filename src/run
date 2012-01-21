@@ -1,0 +1,4 @@
+echo Running solver on ../data/$1.txt:
+time ../bin/sudoku-solve ../data/$1.txt /dev/null 
+# This is to see if anyone's using the CPU heavily at the moment.
+#ps -af

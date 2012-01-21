@@ -1,0 +1,32 @@
+FILE LAYOUT:
+
+bin/
+  sudoku-solve		executable
+data/
+  *.txt			input files formatted to project specifications
+  convert.py		script to convert files from ...43.5.6.7..\n format
+  <no extension>	probably file in the popular ..7.4.3.5.6\n format
+src/
+  Makefile
+  run			bash script for quick testing + timing
+  check			simple (but not guaranteed) verification of solution
+  test			combination of both, fast validity
+  global.h		important configuration options, turn featurse on/off
+  *.c
+  *.h
+  oldcode/		unused backups
+build/
+  *.o
+
+CONFIGURING:
+
+src/global.h
+src/Makefile
+
+
+COMPILING:
+
+cd src
+make
+
+

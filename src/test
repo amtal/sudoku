@@ -1,0 +1,4 @@
+time ../bin/sudoku-solve ../data/1a.txt /dev/null &
+time ../bin/sudoku-solve ../data/1b.txt /dev/null &
+
+

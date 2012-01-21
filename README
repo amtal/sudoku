@@ -1,0 +1,126 @@
+DISCLAIMER: this code dates to 2008-12-20, right before/during term finals. It
+predates my discovery of things like version control, style guides, and false
+sharing.
+
+I love it anyway. It ran pretty damn well (many iterations of optimization got
+it within ~1 order of magnitude of the best solver I found online) and I now
+find the false sharing pitfall hilarious. I implemented the naive parallelization literally several hours before the deadline, and couldn't get a reliable benchmark on the shared machine.
+
+Unedited, rambling, sleep deprived notes and terr^H^H^H^Hawesome code follows!
+--------------------------------------------------------------------------------
+
+
+
+
+USEFUL
+
+CPU information:
+	cat proc/cpuinfo
+Page size:
+	getconf PAGESIZE
+
+
+TODO
+
++parallel processing to make use of two CPUs
+	UPDATE: implemented, code is sloppy but it's a robust algorithm
+		that's hard to screw up. time utility shows user time is
+		higher than real time - I take it that means it's working
+		and work is being split across two CPUs. Can't judge
+		increase in efficiency though, since people are running
+		jobs non-stop which throws off the results.
+	splitting top50000 in half and running two processes
+		109.8s + 115.6s reported by each
+		130s with one process: this is with stuff running in
+		the background - what gives?
+	I'd have to rearrange the sudata linked list into an array.
+	mmap'd array, either to begin with (static array? convert 
+		list to array after finishing the list?)
+	then fork and have the child do odd problems while parent
+		does even, or something like that
+	alternatively: fork before reading mmap'd input file,
+		parent only parses odd puzzles child only even ones
+		problem: output would be out of order
+	never tried using threads on Linux - thread pool is out of the
+		question.
++thread priority setting (impossible needs root)
+-'next bit' (rightmost 1 bit) lookup table
+	will simplify a WIDTH-long for loop - worth it?
+		(probably)
++refactor hidden singles function to use lookup tables
+	(instead of three ugly simiarl-except-for one line blocks of code)
+
+
+
+
+NOTES
+
+10-30x slower than many numbers mentioned by gsf on the forums :(
+	29.9puzzles/s/GHz for gsftest.txt (335, 746, 1190 exist)
+	http://www.sudoku.com/boards/viewtopic.php?t=6062
+	175.3puzzles/s/GHz for top50000.txt (remember reading about 5k/s)
+Reasons? Not enough lookup tables? Need proper block hidden single parsing?
+
+
+
+
+TEST CASES
+
+worstcase.txt
+	Wikipedia worst case for a simple backtracking algorithm, 9x9.
+Starts off with unknown cells 9876543... leading to lots of backtracking.
+I minimized the thread of puzzles like this one by rotating (well, flipping)
+them as they're loaded from a file, such that the majority of their givens
+are in the NW quadrant.
+	The technique could be taken a lot further, with row/column rotations.
+My search algorithm chooses cells to test nondeterministiaclly (linear) and
+such transformations could have a similar effect to the deterministic column
+choice in DLX.
+
+top1465.txt
+	Supposed to mess with backtracking, singles/hidden singles only
+solvers. Takes about a minute. 
+
+top50000.txt
+	Supposedly more general - 2 minutes.
+
+rottest.txt
+hiddensingle.txt
+	Test specifics parts of program.
+
+edgecases.txt
+	Bad input. (For a given value of bad - total garbage WILL crash.)
+
+
+
+  The program was originally written to solve mostly low-hint puzzles that
+required a lot of guessing. For puzzles with many hints that are logic-solveable
+a pre-processing step looks for simple hints.
+  Algorithm choice was between simple but fast brute-force based on bitboards,
+or DLX. Other, more obscure options were explored and rejected based on 
+preliminary research.
+  DLX is more general than a sudoku-specific brute force. It has lower
+algorithmic complexity, but takes much longer per operation. For high values
+of N it should prove superior - how high is hard to say. It's nifty in that
+it handles basic sudoku logic reductions intrinsically.
+
+  Speaking of fancier options: ssh-linux has a decent GPU and OpenGLs' 
+extension scheme -probably- doesn't need root access to install shader support.
+I seriously considered trying to do most of the processing on the GPU.  Solving
+a bunch of sudokus is very parallel, and the since the solving algorithm 
+basically traverses a search tree it's also easy to parallelize. Not to mention
+subtasks like constraint checking being fairly independant of each other.
+  However, closer examination proved disappoting. Floating point operations 
+complicate things more than they help, bitboards being far superior. Hardware 
+accelerated vector operations don't seem particularly useful. Branching is not 
+suggested and is poorly supported on older video card models. Most interesting: 
+operations are done on read only memory and outupt into write only memory. A
+GPU algorithm would have to branch a puzzle into many possible copies, reduce
+those copies to test validity, then recurse. Losing out on memory usage to gain
+in parallelism and hopefully speed... An implementation of something like Knuth's
+algorithm X might be doable. Instead of spending time covering/uncovering
+like DLX does, just make specific copies.
+  In short, definitely interesting, definitely has potential, probably not a good
+way to solve Sudoku.
+  Also, even the C-like shader language may be pushing the project's definition
+of "in C or C++".

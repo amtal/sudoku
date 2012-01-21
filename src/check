@@ -1,0 +1,10 @@
+echo Running solver on solution. Result should be valid and unchanged.
+../bin/sudoku-solve ../data/soln.txt ../data/soln_check.txt 
+#>> /dev/null
+echo Number of puzzles in solution:
+grep start ../data/soln.txt | wc
+grep start ../data/soln_check.txt | wc
+echo Diff of solution and result follows:
+diff ../data/soln.txt ../data/soln_check.txt
+
+
